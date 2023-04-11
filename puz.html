@@ -1,0 +1,265 @@
+<html>
+
+<head>
+    <title>Jigsaw Puzzle using JQuery UI Drap & Drop</title>
+    <script src="jquery-3.6.0.min.js">
+    </script>
+    <link rel="stylesheet" href="jquery-ui.min.css" />
+    <script src="jquery-ui.min.js">
+    </script>
+    <style>
+        h1{
+            font-size:100px;
+            line-height: 100px;
+            text-align: center;
+            color:transparent;
+            -webkit-text-stroke: 1px #fff;
+            background:url(back.png);
+            -webkit-background-clip: text;
+            background-position: 0 0;
+            animation: back 20s linear infinite;
+        }
+        @keyframes back{
+            100%{
+                background-position: 2000px 0;
+            }
+        }
+        ul button {
+            display: inline-block;
+            border-radius: 4px;
+            background-color: #230659;
+            border: none;
+            color: #FFFFFF;
+            text-align: center;
+            font-size: 28px;
+            padding: 20px;
+            width: 200px;
+            transition: all 0.5s;
+            cursor: pointer;
+            margin: 5px;
+            font-family: Georgia, serif;
+        }
+
+        ul button span {
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+            transition: 0.5s;
+        }
+
+        ul button span:after {
+            content: '\00bb';
+            position: absolute;
+            opacity: 0;
+            top: 0;
+            right: -20px;
+            transition: 0.5s;
+        }
+
+        ul button:hover span {
+            padding-right: 25px;
+        }
+
+        ul button:hover span:after {
+            opacity: 1;
+            right: 0;
+        }
+
+        #container {
+            background-color: #c39bea;
+            width: 850px;
+            height: 410px;
+            border: 2px solid #c39bea;
+            border-radius: 20px;
+            margin: 10px auto;
+            padding: 10px;
+            position: relative;
+        }
+        #piecesContainer {
+            width: 408px;
+            height: 408px;
+            border: 2px solid #c39bea;
+            float: left;
+            text-align: center;
+            font-size: 30px;
+            line-height: 400px;
+            position: relative;
+        }
+
+        #puzzleContainer {
+            width: 408px;
+            height: 408px;
+            border: 2px solid #9964d6;
+            float: right;
+
+        }
+
+        ul {
+            list-style-type: none;
+            margin: 20px;
+            text-align: center;
+        }
+
+        #btnReset {
+            display: none;
+        }
+
+        .piece {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #9964d6;
+            float: left;
+            background-image: url(m16.jpg);
+            background-repeat: no-repeat;
+        }
+
+        .pieceHolder {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #9964d6;
+            float: left;
+            background-repeat: no-repeat;
+        }
+        body {
+            background-image:url(m4.gif);
+            background-size: cover; 
+        }
+    </style>
+    <script>
+        $(document).ready(function () {
+            pieces = createPieces(true);
+
+            $("#puzzleContainer").html(pieces);
+            $("#btnStart").click(function () {
+                var pieces = $("#puzzleContainer div");
+                pieces.each(function () {
+                    var leftPosition =
+                        Math.floor(Math.random() * 290) + "px";
+                    var topPosition =
+                        Math.floor(Math.random() * 290) + "px";
+
+                    $(this).addClass("draggablePiece")
+                        .css({
+                            position: "absolute",
+                            left: leftPosition,
+                            top: topPosition
+                        }) 
+                    $("#piecesContainer").append($(this));
+
+                }); 
+                var pieces = createPieces(false);
+
+                $("#puzzleContainer").html(pieces);
+                $(this).hide();
+                $("#btnReset").show()
+                implementLogic()
+            }); 
+            $("#btnReset").click(function () {
+                var newPieces = createPieces(true);
+                $("#puzzleContainer").html(newPieces);
+                $("#piecesContainer").html("");
+                $(this).hide();
+                $("#btnStart").show();
+            }); 
+            function createPieces(withImage) {
+                var rows = 4, columns = 4;
+                var pieces = "";
+
+                for (var i = 0, top = 0, order = 0; i < rows; i++, top -= 100) {
+                    for (var j = 0, left = 0; j < columns; j++, left -= 100, order++) {
+                        if (withImage) {
+                            pieces += "<div style='background-position:"
+                                + left + "px " + top + "px;' class='piece' data-order=" + order + "></div>";
+                        } 
+                        else
+                            pieces +=
+                                "<div style='background-image:none;' class='pieceHolder droppableSpace'></div>";
+                    } 
+                } 
+
+                return pieces;
+            } // fund createPieces(withImage)
+            
+
+            function checkIfPuzzleSolved() {
+                if ($("#puzzleContainer .droppedPiece").length != 16) {
+                    console.log("not full: " + $("#puzzleContainer .droppedPiece").length);
+                    return false;
+                }
+                for (var k = 0; k < 16; k++) {
+
+                    var item = $("#puzzleContainer .droppedPiece:eq(" + k + ")");
+                    var order = item.data("order");
+                    console.log("order: " + order);
+                    console.log("K: " + k);
+
+                    if (k != order) {
+                        $("#piecesContainer").text('TRY AGAIN!!!');
+                        return false;
+                    }
+                }
+                $("#piecesContainer").text("SOLVED!!!");
+
+            } // fund checkIfPuzzleSolved()
+
+
+            function implementLogic() {
+
+                $(".draggablePiece").draggable({
+                    revert: "invalid",
+                    start: function () {
+                        if ($(this).hasClass("droppedPiece")) {
+                            $(this).removeClass("droppedPiece");
+                            $(this).parent().removeClass("piecePresent");
+                        }
+                    }
+                });
+                $(".droppableSpace").droppable({
+                    hoverClass: "ui-state-highlight",
+                    accept: function () {
+                        return !$(this).hasClass("piecePresent")
+                    },
+                    drop: function (event, ui) {
+
+                        var draggableElement = ui.draggable;
+                        var droppedOn = $(this);
+
+                        droppedOn.addClass("piecePresent");
+                        $(draggableElement)
+                            .addClass("droppedPiece")
+                            .css({
+                                top: 0,
+                                left: 0,
+                                position: "relative"
+                            }).appendTo(droppedOn);
+                        checkIfPuzzleSolved();
+                    } // fund of drop:function
+                }); // fund $(".droppableSpace").droppable
+            }  // fund implementLogic()
+        }); // fund $(document).ready(function()
+
+    </script>
+
+</head>
+
+<body>
+    <h1>PUZZLE GAME</h1>
+    <div id="container">
+        <div id="piecesContainer"></div> <!--end "piecesContainer"-->
+        <div id="puzzleContainer"></div> <!--end "puzzleContainer"-->
+    </div> <!--end "container"-->
+    <ul id="buttons">
+        <li>
+            <button id="btnStart" style="vertical-align:middle"><span>START</span></button>
+        </li>
+        <li>
+            <button id="btnReset" style="vertical-align:middle"><span>RESET</span></button>
+        </li>
+    </ul>
+
+
+
+</body>
+
+
+</head>
